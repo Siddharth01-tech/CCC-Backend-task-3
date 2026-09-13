@@ -1,7 +1,29 @@
 {
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0"
-  }
+  },
+  "name": "job_portal_backend",
+  "version": "1.0.0",
+  "description": "A job portal backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Siddharth01-tech/CCC-Backend-task-3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Siddharth01-tech/CCC-Backend-task-3/issues"
+  },
+  "homepage": "https://github.com/Siddharth01-tech/CCC-Backend-task-3#readme"
 }
