@@ -7,7 +7,8 @@ const createProfile = async (
     education,
     experience,
     location,
-    bio
+    bio,
+    resumeId
 ) => {
     const result = await pool.query(
         `INSERT INTO candidate_profiles
@@ -18,9 +19,10 @@ const createProfile = async (
             education,
             experience,
             location,
-            bio
+            bio,
+            resume_id
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING *`,
         [
             userId,
@@ -29,7 +31,8 @@ const createProfile = async (
             education,
             experience,
             location,
-            bio
+            bio,
+            resumeId
         ]
     );
 
@@ -38,9 +41,17 @@ const createProfile = async (
 
 const getProfile = async (userId) => {
     const result = await pool.query(
-        `SELECT *
-         FROM candidate_profiles
-         WHERE user_id = $1`,
+        `SELECT
+            cp.*,
+            f.file_name AS resume_name,
+            f.file_type AS resume_type,
+            f.file_size AS resume_size,
+            f.file_url AS resume_url,
+             f.storage_public_id AS resume_file_id
+         FROM candidate_profiles cp
+         LEFT JOIN files f
+            ON cp.resume_id = f.id
+         WHERE cp.user_id = $1`,
         [userId]
     );
 
@@ -54,7 +65,8 @@ const updateProfile = async (
     education,
     experience,
     location,
-    bio
+    bio,
+    resumeId
 ) => {
     const result = await pool.query(
         `UPDATE candidate_profiles
@@ -82,8 +94,20 @@ const updateProfile = async (
     return result.rows[0];
 };
 
+const getResumeIdByUserId = async (userId) => {
+    const result = await pool.query(
+        `SELECT resume_id
+         FROM candidate_profiles
+         WHERE user_id = $1`,
+        [userId]
+    );
+
+    return result.rows[0]?.resume_id;
+};
+
 module.exports = {
     createProfile,
     getProfile,
-    updateProfile
+    updateProfile,
+    getResumeIdByUserId
 };

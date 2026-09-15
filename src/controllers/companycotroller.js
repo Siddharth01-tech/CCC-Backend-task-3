@@ -1,6 +1,6 @@
-const {
-    createCompany
-} = require("../models/companymodel");
+const {createCompany,getCompanyByRecruiter,updateCompany} = require("../models/companymodel");
+const {createFile}=require("../models/filemodel");
+const {uploadFile}=require("../services/storageservice");
 
 const createCompanyProfile = async (req, res) => {
     try {
@@ -11,6 +11,25 @@ const createCompanyProfile = async (req, res) => {
                 message: "Company name is required"
             });
         }
+        let logoId = null;
+
+        if (req.file) {
+            const uploadResult = await uploadFile(
+                req.file,
+                "job-portal/company-logos"
+            );
+
+            const file = await createFile(
+                req.user.id,
+                req.file.originalname,
+                req.file.mimetype,
+                req.file.size,
+                uploadResult.url,
+                uploadResult.fileId
+            );
+
+            logoId = file.id;
+        }
 
         const company = await createCompany(
             req.user.id,
@@ -18,7 +37,8 @@ const createCompanyProfile = async (req, res) => {
             description,
             website,
             location,
-            industry
+            industry,
+            logoId
         );
 
         res.status(201).json({
@@ -34,6 +54,91 @@ const createCompanyProfile = async (req, res) => {
     }
 };
 
+const getMyCompany = async (req, res) => {
+    try {
+        const company = await getCompanyByRecruiter(
+            req.user.id
+        );
+
+        if (!company) {
+            return res.status(404).json({
+                message: "Company not found"
+            });
+        }
+
+        res.json(company);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
+const updateMyCompany = async (req, res) => {
+    try {
+        const {
+            companyName,
+            description,
+            website,
+            location,
+            industry
+        } = req.body;
+
+        let logoId = null;
+
+        if (req.file) {
+            const uploadResult = await uploadFile(
+                req.file,
+                "job-portal/company-logos"
+            );
+
+            const file = await createFile(
+                req.user.id,
+                req.file.originalname,
+                req.file.mimetype,
+                req.file.size,
+                uploadResult.url,
+                uploadResult.fileId
+            );
+
+            logoId = file.id;
+        }
+
+        const company = await updateCompany(
+            req.user.id,
+            companyName,
+            description,
+            website,
+            location,
+            industry,
+            logoId
+        );
+
+        if (!company) {
+            return res.status(404).json({
+                message: "Company not found"
+            });
+        }
+
+        res.json({
+            message: "Company updated successfully",
+            company
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
 module.exports = {
-    createCompanyProfile
+    createCompanyProfile,
+    getMyCompany,
+    updateMyCompany
 };

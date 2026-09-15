@@ -49,17 +49,98 @@ const createJob = async (
     return result.rows[0];
 };
 
-const getAllJobs = async () => {
+const getJobs = async () => {
     const result = await pool.query(
-        `SELECT *
-         FROM jobs
-         ORDER BY created_at DESC`
+        `SELECT
+            j.*,
+            c.company_name
+         FROM jobs j
+         JOIN companies c
+         ON j.company_id = c.id
+         ORDER BY j.created_at DESC`
     );
 
     return result.rows;
 };
 
+const getJobById = async (jobId) => {
+    const result = await pool.query(
+        `SELECT
+            j.*,
+            c.company_name
+         FROM jobs j
+         JOIN companies c
+         ON j.company_id = c.id
+         WHERE j.id = $1`,
+        [jobId]
+    );
+
+    return result.rows[0];
+};
+
+const updateJob = async (jobId, recruiterId, data) => {
+    const {
+        title,
+        description,
+        location,
+        jobType,
+        salaryMin,
+        salaryMax,
+        skills,
+        experience,
+        deadline
+    } = data;
+
+    const result = await pool.query(
+        `UPDATE jobs
+         SET
+            title = $1,
+            description = $2,
+            location = $3,
+            job_type = $4,
+            salary_min = $5,
+            salary_max = $6,
+            skills = $7,
+            experience = $8,
+            deadline = $9,
+            updated_at = CURRENT_TIMESTAMP
+         WHERE id = $10
+         AND recruiter_id = $11
+         RETURNING *`,
+        [
+            title,
+            description,
+            location,
+            jobType,
+            salaryMin,
+            salaryMax,
+            skills,
+            experience,
+            deadline,
+            jobId,
+            recruiterId
+        ]
+    );
+
+    return result.rows[0];
+};
+
+const deleteJob = async (jobId, recruiterId) => {
+    const result = await pool.query(
+        `DELETE FROM jobs
+         WHERE id = $1
+         AND recruiter_id = $2
+         RETURNING *`,
+        [jobId, recruiterId]
+    );
+
+    return result.rows[0];
+};
+
 module.exports = {
     createJob,
-    getAllJobs
+    getJobs,
+    getJobById,
+    updateJob,
+    deleteJob
 };

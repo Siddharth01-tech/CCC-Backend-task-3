@@ -1,12 +1,28 @@
-const {createApplication,getApplicationsByCandidate} = require("../models/applicationmodel");
+const {createApplication,getApplicationsByCandidate,getApplicationsByRecruiter,updateApplicationStatus} = require("../models/applicationmodel");
 
 const applyForJob = async (req, res) => {
     try {
-        const {jobId, resumeId,coverLetter} = req.body;
+        const {jobId,coverLetter} = req.body;
 
         if (!jobId) {
             return res.status(400).json({
                 message: "Job ID is required"
+            });
+        }
+
+        if (!jobId) {
+            return res.status(400).json({
+                message: "Job ID is required"
+            });
+        }
+
+        const resumeId = await getResumeIdByUserId(
+            req.user.id
+        );
+
+        if (!resumeId) {
+            return res.status(400).json({
+                message: "Please upload your resume before applying"
             });
         }
 
@@ -56,5 +72,5 @@ const getMyApplications = async (req, res) => {
 
 module.exports = {
     applyForJob,
-    getMyApplications
+    getMyApplications,
 };

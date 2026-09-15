@@ -162,6 +162,42 @@ CREATE TABLE applications (
     UNIQUE (job_id, candidate_id)
 );
 
+-- report 
+CREATE TABLE reports (
+    id SERIAL PRIMARY KEY,
+
+    reporter_id INTEGER NOT NULL,
+
+    job_id INTEGER,
+
+    reason TEXT NOT NULL,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'Pending',
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_report_reporter
+    FOREIGN KEY (reporter_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_report_job
+    FOREIGN KEY (job_id)
+    REFERENCES jobs(id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT report_status_check
+    CHECK (
+        status IN (
+            'Pending',
+            'Reviewed',
+            'Resolved',
+            'Rejected'
+        )
+    )
+);
 -- INDEXES
 
 CREATE INDEX idx_users_email
@@ -196,3 +232,15 @@ ON applications(candidate_id);
 
 CREATE INDEX idx_applications_status
 ON applications(status);
+
+CREATE INDEX idx_reports_reporter
+ON reports(reporter_id);
+
+CREATE INDEX idx_reports_job
+ON reports(job_id);
+
+CREATE INDEX idx_reports_status
+ON reports(status);
+
+CREATE INDEX idx_reports_created_at
+ON reports(created_at);

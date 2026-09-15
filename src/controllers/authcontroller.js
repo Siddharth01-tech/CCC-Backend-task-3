@@ -13,9 +13,9 @@ const register = async (req, res) => {
             });
         }
 
-        const existingUser = await findUserByEmail(email);
+        const checkUser = await findUserByEmail(email);
 
-        if (existingUser) {
+        if (checkUser) {
             return res.status(409).json({
                 message: "Email already registered"
             });
@@ -84,16 +84,15 @@ const login = async (req, res) => {
             {
                 id: user.id,
                 role: user.role
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "1d"
-            }
+            },process.env.JWT_SECRET,
         );
+        
+        res.cookie("token", token)
 
-        res.json({
+        res.status(200).json({
             message: "Login successful",
-            token
+            token,
+            user
         });
 
     } catch (error) {
@@ -105,7 +104,21 @@ const login = async (req, res) => {
     }
 };
 
+const logout = async(req,res)=>{
+    try {
+        res.clearCookie("token");
+        return res.status(200).json({
+            message:"logout successfully"
+        })
+    } catch (error) {
+         res.status(500).json({
+            message: error.message
+        });
+    }
+}
+
 module.exports = {
     register,
-    login
+    login,
+    logout
 };

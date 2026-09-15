@@ -7,8 +7,7 @@ const createCompany = async (
     website,
     location,
     industry,
-    logoName,
-    logoUrl
+    logoId
 ) => {
     const result = await pool.query(
         `INSERT INTO companies
@@ -19,8 +18,7 @@ const createCompany = async (
             website,
             location,
             industry,
-            logo_name,
-            logo_url
+            logo_id
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING *`,
@@ -31,8 +29,7 @@ const createCompany = async (
             website,
             location,
             industry,
-            logoName,
-            logoUrl
+            logoId
         ]
     );
 
@@ -41,9 +38,17 @@ const createCompany = async (
 
 const getCompanyByRecruiter = async (recruiterId) => {
     const result = await pool.query(
-        `SELECT *
-         FROM companies
-         WHERE recruiter_id = $1`,
+        `SELECT
+            c.*,
+            f.file_name AS logo_name,
+            f.file_type AS logo_type,
+            f.file_size AS logo_size,
+            f.file_url AS logo_url,
+            f.storage_public_id AS logo_file_id
+         FROM companies c
+         LEFT JOIN files f
+         ON c.logo_id = f.id
+         WHERE c.recruiter_id = $1`,
         [recruiterId]
     );
 
@@ -57,8 +62,7 @@ const updateCompany = async (
     website,
     location,
     industry,
-    logoName,
-    logoUrl
+    logoId
 ) => {
     const result = await pool.query(
         `UPDATE companies
@@ -68,10 +72,9 @@ const updateCompany = async (
             website = $3,
             location = $4,
             industry = $5,
-            logo_name = $6,
-            logo_url = $7,
+            logo_id = COALESCE($6,logo_id),
             updated_at = CURRENT_TIMESTAMP
-         WHERE recruiter_id = $8
+         WHERE recruiter_id = $7
          RETURNING *`,
         [
             companyName,
@@ -79,8 +82,7 @@ const updateCompany = async (
             website,
             location,
             industry,
-            logoName,
-            logoUrl,
+            logoId,
             recruiterId
         ]
     );

@@ -33,6 +33,18 @@ const createFile = async (
     return result.rows[0];
 };
 
+const getFileById = async (fileId) => {
+    const result = await pool.query(
+        `SELECT *
+         FROM files
+         WHERE id = $1`,
+        [fileId]
+    );
+
+    return result.rows[0];
+};
+
 module.exports = {
-    createFile
+    createFile,
+    getFileById
 };
