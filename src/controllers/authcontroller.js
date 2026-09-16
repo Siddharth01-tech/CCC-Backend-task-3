@@ -1,7 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const {createUser,findUserByEmail} = require("../models/usermodel");
+const { createUser, findUserByEmail, findUserById } = require("../models/usermodel");
+
+const isProduction = process.env.NODE_ENV === "production";
 
 const register = async (req, res) => {
     try {
@@ -36,14 +38,13 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Register Error:", error);
 
         res.status(500).json({
             message: "Internal server error"
         });
     }
 };
-
 
 const login = async (req, res) => {
     try {
@@ -65,7 +66,7 @@ const login = async (req, res) => {
 
         if (user.is_blocked) {
             return res.status(403).json({
-                message: "User is blocked"
+                message: "Your account is blocked. Please contact support."
             });
         }
 
@@ -84,19 +85,30 @@ const login = async (req, res) => {
             {
                 id: user.id,
                 role: user.role
-            },process.env.JWT_SECRET,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
         );
-        
-        res.cookie("token", token)
+
+        // Secure Cookie configuration
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
+
+        // Exclude password_hash from response
+        const { password_hash, ...safeUser } = user;
 
         res.status(200).json({
             message: "Login successful",
             token,
-            user
+            user: safeUser
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Login Error:", error);
 
         res.status(500).json({
             message: "Internal server error"
@@ -104,21 +116,50 @@ const login = async (req, res) => {
     }
 };
 
-const logout = async(req,res)=>{
+const getCurrentUser = async (req, res) => {
     try {
-        res.clearCookie("token");
-        return res.status(200).json({
-            message:"logout successfully"
-        })
+        const user = await findUserById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            user
+        });
+
     } catch (error) {
-         res.status(500).json({
-            message: error.message
+        console.error("Get Current User Error:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
         });
     }
-}
+};
+
+const logout = async (req, res) => {
+    try {
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax"
+        });
+
+        return res.status(200).json({
+            message: "Logout successful"
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
 
 module.exports = {
     register,
     login,
+    getCurrentUser,
     logout
 };

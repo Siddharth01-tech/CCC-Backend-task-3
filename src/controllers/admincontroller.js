@@ -1,4 +1,5 @@
-const {getAllUsers,getUserById,blockUser,unblockUser,getAllJobs,deleteJob} = require("../models/adminmodel");
+const { getAllUsers, getUserById, blockUser, unblockUser, getAllJobs, deleteJob } = require("../models/adminmodel");
+const { delCache, delCachePattern } = require("../config/redis");
 
 const getUsers = async (req, res) => {
     try {
@@ -47,7 +48,6 @@ const getUser = async (req, res) => {
         });
     }
 };
-
 
 const blockUserAccount = async (req, res) => {
     try {
@@ -122,7 +122,6 @@ const unblockUserAccount = async (req, res) => {
     }
 };
 
-
 const getJobs = async (req, res) => {
     try {
         const jobs = await getAllJobs();
@@ -157,6 +156,10 @@ const removeJob = async (req, res) => {
                 message: "Job not found"
             });
         }
+
+        // Invalidate Redis cache for this job and all job list queries
+        await delCache(`job:${jobId}`);
+        await delCachePattern("jobs:all*");
 
         return res.status(200).json({
             message: "Job deleted successfully",
