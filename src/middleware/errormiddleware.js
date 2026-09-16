@@ -1,8 +1,7 @@
-// Centralized Safe Error Handling Middleware
+
 const errorHandler = (err, req, res, next) => {
     console.error("Unhandled Error:", err);
 
-    // Multer file size / upload errors
     if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(400).json({
             message: "File is too large. Please upload a smaller file."
@@ -15,28 +14,24 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // PostgreSQL unique constraint error
     if (err.code === "23505") {
         return res.status(409).json({
             message: "A record with this information already exists."
         });
     }
 
-    // PostgreSQL foreign key violation error
     if (err.code === "23503") {
         return res.status(400).json({
             message: "Referenced entity does not exist."
         });
     }
 
-    // JWT authentication errors
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
         return res.status(401).json({
             message: "Invalid or expired token."
         });
     }
 
-    // Default safe server error (never leak raw stack trace or database credentials)
     const status = err.statusCode || 500;
     const isProd = process.env.NODE_ENV === "production";
 
